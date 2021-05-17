@@ -1,0 +1,19 @@
+[package]
+name = "dbreadwrite"
+version = "0.1.0"
+authors = ["Albino Cordeiro <albino@intuitionlogic.com>"]
+edition = "2018"
+description = "dbreadwrite mandatory description"
+repository = "https://github.com/albinocordeiro/dbreadwrite"
+license = "MIT OR Apache-2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+color-eyre = "0.5.10"
+csv = "1.1.6"
+chrono = "0.4.19"
+clap = "3.0.0-beta.2"
+serde = "1.0.126"
+serde_json = "1.0.45"
+rand = "0.8.3"
