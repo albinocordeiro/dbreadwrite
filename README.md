@@ -26,7 +26,7 @@ simulate high traffic of users sending requests)
 ## Analysis
 
 ### Database design
-From the problem statement I conclude that the the data base would have to start with at least one table, the accounts table, to keep records of accounts and their balances. Also, based on the events definition json file, a table per event type should be added.  
+From the problem statement I conclude that the database would have to start with at least one table, the accounts table, to keep records of accounts and their balances. Also, based on the events definition json file, a table per event type should be added.
 
 ### Writer
 The writer needs to account for the fact that ther could be multiple instances of the writer and reader. That means that concurrent writes/updates could cause inconsistency in the data, in particular, in the accounts table where balances could be corrupted.
@@ -43,10 +43,23 @@ A single instance of the reader generates 10 queries per second, thus, performan
 
 ## Installation
 ```bash 
-
-echo DATABASE_URL=postgres://username:password@localhost/dbreadwrite > .env
-# Add the excutables folder to the path
-export PATH=/home/user_name/projects/dbreadwrite/target/debug:$PATH 
+# The following assumes you're running a ubuntu shell (tested on a Windows WSL2.0 ubuntu) and you have installed postgresql
+sudo su - postgres
+createuser polyuser
+createdb readwritedb
+psql -c  "alter user polyuser with encrypted password 'youshallnotpass';"
+psql -c  "grant all privileges on database readwritedb to  polyuser;"
+# go back to your default user session
+exit
+# create .env with connection string
+echo DATABASE_URL=postgres://polyuser:youshallnotpass@localhost/readwritedb > .env
+# Add the excutables folder to the $PATH
+echo "export PATH=~/sandbox/dbreadwrite/target/debug:\$PATH" >> ~/.bashrc
+export PATH=~/sandbox/dbreadwrite/target/debug:$PATH
+# Install diesel cli to create the database and also create the initial table setup (account and mints, transfers and burns event tables)
+# Note that new event type tables can be added when triggered by changes in the events definition file
+cargo install diesel_cli --no-default-features --features postgres
+diesel setup
 ```
 ### Cargo
 
@@ -54,7 +67,6 @@ export PATH=/home/user_name/projects/dbreadwrite/target/debug:$PATH
   [this](https://www.rust-lang.org/tools/install) guide.
 * run `cargo build`
 * run `cargo doc --open`
-
 
 ## License
 
