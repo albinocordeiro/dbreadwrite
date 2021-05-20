@@ -7,21 +7,22 @@ use clap::Clap;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use dbreadwrite::schema_management::SchemaManager;
-use dbreadwrite::random_events::commit_random_event;
+use dbreadwrite::schema_management::load_event_types_from_file;
+use dbreadwrite::random_events::execute_random_read_query;
 
 #[derive(Clap)]
 #[clap(
     version = "0.1.0",
     author = "Albino Cordeiro <albino@intuitionlogic.com",
-    about = "Concurrent database writer experiment"
+    about = "Concurrent database reader experiment"
 )]
 struct Options {
-    #[clap(short, long, default_value = "5")]
-    seconds_between_writes: f64,
+    #[clap(short, long, default_value = "0.1")]
+    seconds_between_reads: f64,
     #[clap(short, long, default_value = "./typemapping/type_mapping.json")]
     event_type_file: String,
 }
+
 
 fn main() -> Result<()> {
     let options = Options::parse();
@@ -39,15 +40,14 @@ fn main() -> Result<()> {
     let terminate_command = Arc::new(AtomicBool::new(false));
     signal_hook::flag::register(signal_hook::consts::SIGINT, Arc::clone(&terminate_command))?;
 
-    // SchemaManager constructor will try to update schema and update local copy of the event_type map
-    let mut schema_manager = SchemaManager::new(&options.event_type_file)?;
+    let event_types = load_event_types_from_file(&options.event_type_file)?;
 
     while !terminate_command.load(Ordering::Relaxed) {
-        schema_manager.check_update_schema()?;
-        commit_random_event(schema_manager.get_event_types())?;
+        
+        execute_random_read_query(&event_types)?;
 
         thread::sleep(time::Duration::from_secs_f64(
-            options.seconds_between_writes,
+            options.seconds_between_reads,
         ));
     }
 

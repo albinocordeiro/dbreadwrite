@@ -1,31 +1,34 @@
 //! Generate random writes and random reads
 use crate::pgconn::establish_connection;
 use color_eyre::eyre::{Result, eyre};
-use diesel::pg::data_types::*;
-use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel::sql_query;
-use diesel::sql_types::*;
 use log::trace;
 use rand::prelude::*;
 use serde_json::{Map, Value};
 use chrono::prelude::*;
 use chrono::Duration;
 
-/// Generate a random write
-pub fn commit_random_event( event_types: &Map<String, Value>) -> Result<()> {
+
+/// Generate a random read
+pub fn execute_random_read_query(event_types: &Map<String, Value>) -> Result<()> {
     let mut rng = thread_rng();
+    let (event_name, _): (&str, &Value) = pick_random_event_type(event_types)?;
 
-    let event_type_names: Vec<&String> = event_types.keys().collect();
+    // SELECT * FROM event_name WHERE time BETWEEN now-random AND now 
+    let conn = establish_connection();
+    let now = Utc::now().format("'%Y-%m-%d %H:%M:%S'").to_string();
+    let before = (Utc::now() - Duration::milliseconds(rng.gen_range(1i64..1000000))).format("'%Y-%m-%d %H:%M:%S'").to_string();
+    let select_sql = format!("SELECT time,amount FROM {} WHERE time BETWEEN {} AND {}", &event_name, &before, &now);
+    sql_query(&select_sql).execute(&conn)?;
+    Ok(())
+}
 
-    let random_idx = rng.gen_range(0..event_types.len());
-    let event_name = event_type_names[random_idx];
-    let event_type: &Value = &event_types[event_name];
+/// Generate a random write
+pub fn commit_random_event(event_types: &Map<String, Value>) -> Result<()> {
+    let (event_name, event_type): (&str, &Value) = pick_random_event_type(event_types)?;
 
-    trace!("Random pick event type: {:?}", &event_name);
-
-    // Generate random values for cols data types
-
+    // Generate random values for the columns' data types
     if let Value::Object(map) = event_type {
         if let Value::Object(type_mapping) = &map["type_mapping"] {
             let insert_sql = sql_from_type_mapping(event_name, &type_mapping)?;
@@ -44,6 +47,19 @@ pub fn commit_random_event( event_types: &Map<String, Value>) -> Result<()> {
     Err(eyre!("Invalid event_type object {:?}", event_type))
 }
 
+fn pick_random_event_type(event_types: &Map<String, Value>) -> Result<(&str, &Value)> {
+    let mut rng = thread_rng();
+
+    let event_type_names: Vec<&String> = event_types.keys().collect();
+
+    let random_idx = rng.gen_range(0..event_types.len());
+    let event_name = event_type_names[random_idx];
+    let event_type: &Value = &event_types[event_name];
+
+    trace!("Random picked event type: {}", &event_name);
+    
+    Ok((&event_name[..], event_type))
+}
 
 fn sql_from_type_mapping(table_name: &str, type_mapping: &Map<String, Value>) -> Result<String> {
     let mut rng = thread_rng();

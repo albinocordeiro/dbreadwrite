@@ -125,7 +125,7 @@ impl SchemaManager {
     }
 }
 
-fn load_event_types_from_file(event_types_file: &str) -> Result<Map<String, Value>> {
+pub fn load_event_types_from_file(event_types_file: &str) -> Result<Map<String, Value>> {
     let mut file = File::open(event_types_file)?;
     let mut file_content = String::new();
     file.read_to_string(&mut file_content)?;
