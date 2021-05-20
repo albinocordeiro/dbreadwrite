@@ -20,6 +20,7 @@ pub fn execute_random_read_query(event_types: &Map<String, Value>) -> Result<()>
     let now = Utc::now().format("'%Y-%m-%d %H:%M:%S'").to_string();
     let before = (Utc::now() - Duration::milliseconds(rng.gen_range(1i64..1000000))).format("'%Y-%m-%d %H:%M:%S'").to_string();
     let select_sql = format!("SELECT time,amount FROM {} WHERE time BETWEEN {} AND {}", &event_name, &before, &now);
+    trace!("{}", &select_sql);
     sql_query(&select_sql).execute(&conn)?;
     Ok(())
 }
@@ -55,8 +56,6 @@ fn pick_random_event_type(event_types: &Map<String, Value>) -> Result<(&str, &Va
     let random_idx = rng.gen_range(0..event_types.len());
     let event_name = event_type_names[random_idx];
     let event_type: &Value = &event_types[event_name];
-
-    trace!("Random picked event type: {}", &event_name);
     
     Ok((&event_name[..], event_type))
 }

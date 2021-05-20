@@ -56,6 +56,11 @@ echo DATABASE_URL=postgres://polyuser:youshallnotpass@localhost/readwritedb > .e
 # Add the excutables folder to the $PATH
 echo "export PATH=~/sandbox/dbreadwrite/target/debug:\$PATH" >> ~/.bashrc
 export PATH=~/sandbox/dbreadwrite/target/debug:$PATH
+# Run a few instances of writer and reader in parallel
+writer & writer & reader & reader & reader
+# To stop them you have to do the following multiple times :-) 
+fg
+^C
 
 ```
 ### Cargo

@@ -43,7 +43,7 @@ fn main() -> Result<()> {
     let event_types = load_event_types_from_file(&options.event_type_file)?;
 
     while !terminate_command.load(Ordering::Relaxed) {
-        
+    
         execute_random_read_query(&event_types)?;
 
         thread::sleep(time::Duration::from_secs_f64(
