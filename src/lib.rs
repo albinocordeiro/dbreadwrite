@@ -1,4 +1,3 @@
-#[macro_use]
-extern crate diesel;
-pub mod schema;
-pub mod dbconn;
+pub mod pgconn;
+pub mod schema_management;
+pub mod random_events;

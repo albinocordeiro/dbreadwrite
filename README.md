@@ -26,10 +26,10 @@ simulate high traffic of users sending requests)
 ## Analysis
 
 ### Database design
-From the problem statement I conclude that the database would have to start with at least one table, the accounts table, to keep records of accounts and their balances. Also, based on the events definition json file, a table per event type should be added.
+From the problem statement I conclude that the database will have, based on the events definition json file, a table per event type. The type_mapping dictionary in each event type definition defines columns.
 
 ### Writer
-The writer needs to account for the fact that ther could be multiple instances of the writer and reader. That means that concurrent writes/updates could cause inconsistency in the data, in particular, in the accounts table where balances could be corrupted.
+The writer needs to account for the fact that there could be multiple instances of the writer and reader. That means that concurrent writes/updates could cause inconsistency in the data. The main tool to avoid database corruption is to make sure that update queries are ACID transactions (Atomic, Consistent, Isolated and Durable). 
 
 Another main topic in the writer is that it needs to keep track of changes in the events definition json file and update the database schema with new fields and event types.
 
@@ -56,10 +56,7 @@ echo DATABASE_URL=postgres://polyuser:youshallnotpass@localhost/readwritedb > .e
 # Add the excutables folder to the $PATH
 echo "export PATH=~/sandbox/dbreadwrite/target/debug:\$PATH" >> ~/.bashrc
 export PATH=~/sandbox/dbreadwrite/target/debug:$PATH
-# Install diesel cli to create the database and also create the initial table setup (account and mints, transfers and burns event tables)
-# Note that new event type tables can be added when triggered by changes in the events definition file
-cargo install diesel_cli --no-default-features --features postgres
-diesel setup
+
 ```
 ### Cargo
 
